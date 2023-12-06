@@ -1,15 +1,8 @@
 import tkinter as tk
 
-# Erstelle das Hauptfenster
+# Erstelle das Hauptfenster und setze seine Größe
 root = tk.Tk()
-
-# Funktion zur Anpassung der Größe des Fensters
-def resize_window():
-    root.geometry("400x300")  # Ändere die Größe des Fensters auf 400x300
-
-# Button zur Größenanpassung
-resize_button = tk.Button(root, text="Größe anpassen", command=resize_window)
-resize_button.pack()  # Zeige den Button im Fenster an
+root.geometry("500x400")  # Legt die Größe des Fensters auf 500x400 fest
 
 # Starte die UI-Schleife
 root.mainloop()
