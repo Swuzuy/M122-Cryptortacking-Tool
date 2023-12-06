@@ -25,22 +25,31 @@ class CryptoMonitorApp:
         self.plot_frame = ttk.Frame(root)
         self.plot_frame.grid(row=1, column=0, columnspan=3)
 
-def fetch_data(self):
-    crypto_id = self.crypto_var.get()
-    if not crypto_id:
-        return
+        # Aktualisiere die Daten alle 5 Minuten (300000 Millisekunden)
+        self.root.after(300000, self.fetch_data_periodic)
 
-    cg = CoinGeckoAPI()
-    crypto_data = cg.get_coin_market_chart_range_by_id(id=crypto_id, vs_currency='usd', from_timestamp=self.get_one_year_ago(), to_timestamp=int(datetime.now().timestamp()))
+    def fetch_data(self):
+        crypto_id = self.crypto_var.get()
+        if not crypto_id:
+            return
 
-    print(crypto_data)  # Debug-Ausgabe
+        cg = CoinGeckoAPI()
+        crypto_data = cg.get_coin_market_chart_range_by_id(id=crypto_id, vs_currency='usd', from_timestamp=self.get_one_year_ago(), to_timestamp=int(datetime.now().timestamp()))
 
-    if 'prices' in crypto_data:
-        prices = [price[1] for price in crypto_data['prices']]
-        timestamps_key = 'timestamps'  # Anpassen, falls der Schlüssel einen anderen Namen hat
-        if timestamps_key in crypto_data:
-            timestamps = [datetime.fromtimestamp(timestamp/1000) for timestamp in crypto_data[timestamps_key]]
-            self.plot_prices(timestamps, prices)
+        if crypto_data and 'prices' in crypto_data:
+            prices = [price[1] for price in crypto_data['prices']]
+            timestamps_key = 'timestamps'
+            if timestamps_key in crypto_data:
+                timestamps = [datetime.fromtimestamp(timestamp/1000) for timestamp in crypto_data[timestamps_key]]
+                self.plot_prices(timestamps, prices)
+
+        # Aktualisiere die Daten erneut in 5 Minuten
+        self.root.after(300000, self.fetch_data_periodic)
+
+    def fetch_data_periodic(self):
+        # Funktion, um Daten periodisch zu aktualisieren
+        # Hier könnt ihr weitere Aktionen durchführen oder die vorhandene Funktion 'fetch_data' aufrufen
+        self.fetch_data()
 
     def get_one_year_ago(self):
         one_year_ago = datetime.now() - timedelta(days=365)
@@ -57,9 +66,9 @@ def fetch_data(self):
         ax.set_title('Kursverlauf der Kryptowährung')
         ax.set_xlabel('Datum')
         ax.set_ylabel('Preis in USD')
-        ax.xaxis_date()  # Formatiere die x-Achse als Datum
+        ax.xaxis_date()
 
-        fig.autofmt_xdate()  # Automatische Anpassung der Datumsetiketten für eine bessere Lesbarkeit
+        fig.autofmt_xdate()
 
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
