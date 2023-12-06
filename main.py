@@ -70,4 +70,4 @@ if __name__ == "__main__":
     app = CryptoMonitorApp(root)
     root.mainloop()
 
-    print("Test")
+    print("Test2")
