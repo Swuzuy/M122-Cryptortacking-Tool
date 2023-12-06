@@ -69,5 +69,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = CryptoMonitorApp(root)
     root.mainloop()
-
-    print("Test2")
