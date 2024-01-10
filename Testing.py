@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import cryptocompare
@@ -9,54 +8,62 @@ class CryptoApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Crypto Price Viewer")
-        self.root.geometry("800x600")
-        self.root.configure(bg="white")  # Hintergrundfarbe des Hauptfensters
+        self.root.geometry("1200x800")
+        self.root.configure(bg="#A9A9A9")  # Hintergrundfarbe des Hauptfensters
+        
+        # Hintergrund für die Frames
+        frame_bg_color = "#A9A9A9"
 
         # Frame für den Seitenbalken
-        sidebar_frame = tk.Frame(root, bg="#1f1f1f")  # Dunkler Hintergrund für den Seitenbalken
-        sidebar_frame.pack(side=tk.RIGHT, fill=tk.Y)
+        sidebar_frame = tk.Frame(root, bg=frame_bg_color)  # Dunkler Hintergrund für den Seitenbalken
+        sidebar_frame.pack(side=tk.LEFT, fill=tk.Y, padx=20)  # Hier wird der Seitenbalken nach links verschoben
 
         # Buttons im Seitenbalken als Ovale mit dunklerem Stil
         buttons = ["Bitcoin", "Ethereum", "Cardano", "Tag", "Monate", "Jahr"]
         for button_text in buttons:
             button = tk.Button(sidebar_frame, text=button_text, command=lambda bt=button_text: self.handle_button_click(bt),
-                                relief=tk.GROOVE, borderwidth=3, width=15, height=2, bg="#333333", fg="white")
-            button.pack(fill=tk.X, pady=10)
+                                relief=tk.GROOVE, borderwidth=3, width=15, height=2, bg="#686A6C", fg="white")
+            button.pack(fill=tk.X, pady=20)
 
         # Frame für den Graph und den Preis mit weißem Hintergrund
-        content_frame = tk.Frame(root, bg="white")  # Hintergrundfarbe für den Graphen
+        content_frame = tk.Frame(root, bg=frame_bg_color)  # Hintergrundfarbe für den Graphen
         content_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Initialisierung des Graphs
         self.fig, self.ax = plt.subplots(figsize=(6, 4), dpi=100)
-        self.ax.set_facecolor('white')  # Hintergrundfarbe des Graphen
+        self.ax.set_facecolor('#A9A9A9')  # Hintergrundfarbe des Graphen
         self.canvas = FigureCanvasTkAgg(self.fig, master=content_frame)
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # Label für den aktuellen Preis mit weißem Hintergrund
-        self.price_label = tk.Label(content_frame, text="", font=("Helvetica", 14), bg="white", fg="#1f1f1f")
+        self.price_label = tk.Label(content_frame, text="", font=("Helvetica", 14), bg=frame_bg_color, fg="#1f1f1f")
         self.price_label.pack(side=tk.BOTTOM, pady=10)
 
         # Initialisierung der Timer-ID für die Preisaktualisierung
         self.update_timer_id = None
         # Initialisierung der Standard-Zeitspanne
         self.time_range = "Tag"
+        # Initialisierung der aktuellen Währung
+        self.current_coin = "Bitcoin"
         # Aktualisiere den Graph und den Preis beim Start
-        self.show_chart("Bitcoin")
+        self.show_chart()
 
     def handle_button_click(self, button_text):
         if button_text in ["Tag", "Monate", "Jahr"]:
             self.time_range = button_text
             # Aktualisiere den Graph mit der neuen Zeitspanne
-            self.show_chart("Bitcoin")
+            self.show_chart()
         else:
             # Handhabung für die Cryptocurrency-Buttons
             self.show_chart(button_text)
 
-    def show_chart(self, coin):
+    def show_chart(self, coin=None):
         try:
+            if coin:
+                self.current_coin = coin  # Speichere die aktuelle Währung
+
             # Lade historische Daten für den ausgewählten Coin und die entsprechende Zeitspanne
-            coin_symbol = self.get_coin_symbol(coin)
+            coin_symbol = self.get_coin_symbol(self.current_coin)
             data = self.get_historical_data(coin_symbol, self.time_range)
 
             if data is None or not data:  # Überprüfe, ob Daten vorhanden sind
@@ -75,9 +82,9 @@ class CryptoApp:
             for i in range(len(dates) - 1):
                 self.ax.plot([dates[i], dates[i + 1]], [prices[i], prices[i + 1]], color=colors[i], marker='o', markersize=5, markerfacecolor='black', markeredgecolor='black')
 
-            self.ax.legend([coin], loc='upper left')
-            self.ax.set_xticklabels(dates, rotation=45, ha='right')  # Drehung der Datumsangaben
-            self.ax.set_facecolor('white')  # Hintergrundfarbe des Graphen
+            self.ax.legend([self.current_coin], loc='upper left')
+            self.ax.set_xticklabels(dates, rotation=50, ha='right')  # Drehung der Datumsangaben
+            self.ax.set_facecolor('#A9A9A9')  # Hintergrundfarbe des Graphen
 
             # Füge vertikale und horizontale Linien für jeden Tag hinzu
             for date in dates:
@@ -88,27 +95,29 @@ class CryptoApp:
 
             # Zeige den aktuellen Preis an
             current_price = cryptocompare.get_price(coin_symbol, currency="USD")[coin_symbol]["USD"]
-            self.price_label.config(text=f"Aktueller Preis von {coin}: ${current_price:.2f}")
+            self.price_label.config(text=f"Aktueller Preis von {self.current_coin}: ${current_price:.2f}")
 
             # Starte die kontinuierliche Aktualisierung des Preises
-            self.start_price_update(coin)
+            self.start_price_update(self.current_coin)
         except Exception as e:
-            print(f"Fehler beim Laden der Daten für {coin}: {e}")
-            self.price_label.config(text=f"Fehler beim Laden der Daten für {coin}")
+            print(f"Fehler beim Laden der Daten für {self.current_coin}: {e}")
+            self.price_label.config(text=f"Fehler beim Laden der Daten für {self.current_coin}")
 
     def get_historical_data(self, coin_symbol, time_range):
         # Bestimme das Startdatum basierend auf der ausgewählten Zeitspanne
         if time_range == "Tag":
-            start_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            start_date = int((datetime.now() - timedelta(days=1)).timestamp())
         elif time_range == "Monate":
-            start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+            start_date = int((datetime.now() - timedelta(days=30)).timestamp())
         elif time_range == "Jahr":
-            start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+            start_date = int((datetime.now() - timedelta(days=365)).timestamp())
         else:
             raise ValueError("Ungültige Zeitspanne")
 
         # Lade historische Daten für den ausgewählten Coin und die entsprechende Zeitspanne
-        data = cryptocompare.get_historical_price_day(coin_symbol, currency="USD", limit=30, toTs=start_date)
+        data = cryptocompare.get_historical_price_day(
+            coin_symbol, currency="USD", limit=30, toTs=start_date
+        )
         return data
 
     def get_coin_symbol(self, coin):
